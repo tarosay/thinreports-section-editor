@@ -73,6 +73,14 @@
       <ItemIcon type="stack-view" />
     </ToolButton>
 
+    <ToolButton
+      description="Table"
+      :active="isActiveTool('table')"
+      @click="activateTool('table')"
+    >
+      <ItemIcon type="table" />
+    </ToolButton>
+
     <LocaleMenu />
   </div>
 </template>

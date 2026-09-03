@@ -83,6 +83,7 @@ export default defineComponent({
         case 'text-block': report.actions.drawNewTextBlockItem(payload); break;
         case 'image-block': report.actions.drawNewImageBlockItem(payload); break;
         case 'stack-view': report.actions.drawNewStackViewItem(payload); break;
+        case 'table': report.actions.drawNewTableItem(payload); break;
         default:
           throw new Error(`Invalid itemType: ${itemType}`);
       }

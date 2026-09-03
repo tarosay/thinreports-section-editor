@@ -2,7 +2,7 @@ import _cloneDeep from 'lodash.clonedeep';
 import { GettersBase } from '../base/getters-base';
 import encodeToSchema from '../lib/layout-schema/encode';
 import { calcMinus, calcPlus } from '@/lib/strict-calculator';
-import { Report, AnyItem, StackViewItem, AnySection, SectionUid, ItemUid, StackViewRowUid, StackViewRow, CanvasUid, CanvasType, BoundingPoints, CopiedAnyItem, CopiedGraphicItem, CopiedStackViewItem, CopiedStackViewRow, Size, ItemType, TypeDetectedItem, GraphicItem } from '@/types';
+import { Report, AnyItem, StackViewItem, AnySection, SectionUid, ItemUid, StackViewRowUid, StackViewRow, CanvasUid, CanvasType, BoundingPoints, CopiedAnyItem, CopiedGraphicItem, CopiedStackViewItem, CopiedStackViewRow, Size, ItemType, TypeDetectedItem, GraphicItem, TableItem, TableRow, TableRowUid, TableCell, TableCellUid, CopiedTableItem, CopiedTableRow, CopiedTableCell } from '@/types';
 
 export class Getters extends GettersBase<Report> {
   toSchemaJSON () {
@@ -62,6 +62,18 @@ export class Getters extends GettersBase<Report> {
     return row;
   }
 
+  findTableRow (uid: TableRowUid): TableRow {
+    const row = this.state.entities.tableRows[uid];
+    if (!row) throw new Error(`TableRow(${uid}) is not found`);
+    return row;
+  }
+
+  findTableCell (uid: TableCellUid): TableCell {
+    const cell = this.state.entities.tableCells[uid];
+    if (!cell) throw new Error(`TableCell(${uid}) is not found`);
+    return cell;
+  }
+
   findItem<T extends ItemType | undefined> (uid: ItemUid, itemType?: T): TypeDetectedItem<T> {
     const item = this.state.entities.items[uid];
 
@@ -74,7 +86,7 @@ export class Getters extends GettersBase<Report> {
   findGraphicItem (uid: ItemUid): GraphicItem {
     const item = this.findItem(uid);
 
-    if (item.type === 'stack-view') {
+    if (item.type === 'stack-view' || item.type === 'table') {
       throw new Error(`Item#${uid} is a StackViewItem but not GraphicItem`);
     } else {
       return item;
@@ -107,6 +119,13 @@ export class Getters extends GettersBase<Report> {
           x2: calcPlus(item.x, item.width),
           y2: calcPlus(item.y, this.heightOfStackView(uid))
         };
+      case 'table':
+        return {
+          x1: item.x,
+          y1: item.y,
+          x2: calcPlus(item.x, this.widthOfTable(uid)),
+          y2: calcPlus(item.y, this.heightOfTable(uid))
+        };
       default:
         return {
           x1: item.x,
@@ -127,6 +146,36 @@ export class Getters extends GettersBase<Report> {
     if (!this.state.activeEntity || this.state.activeEntity.type !== 'stack-view-row') return false;
 
     return this.state.activeEntity.uid === uid;
+  }
+
+  isActiveTableRow (uid: TableRowUid): boolean {
+    if (!this.state.activeEntity || this.state.activeEntity.type !== 'table-row') return false;
+
+    return this.state.activeEntity.uid === uid;
+  }
+
+  isActiveTableCell (uid: TableCellUid): boolean {
+    if (!this.state.activeEntity || this.state.activeEntity.type !== 'table-cell') return false;
+
+    return this.state.activeEntity.uid === uid;
+  }
+
+  isActiveTableRowTree (uid: TableRowUid): boolean {
+    if (this.isActiveTableRow(uid)) return true;
+
+    const activeEntity = this.state.activeEntity;
+    if (!activeEntity || activeEntity.type !== 'table-cell') return false;
+
+    return this.findTableRow(uid).cells.includes(activeEntity.uid);
+  }
+
+  isActiveTableTree (uid: ItemUid): boolean {
+    if (!this.state.activeEntity) return false;
+
+    const item = this.state.entities.items[uid];
+    if (!item || item.type !== 'table') return false;
+
+    return this.isActiveItem(uid) || item.rows.some(rowUid => this.isActiveTableRowTree(rowUid));
   }
 
   isActiveItem (uid: ItemUid): boolean {
@@ -171,6 +220,36 @@ export class Getters extends GettersBase<Report> {
     return stackView.rows.reduce((h, rowUid) => h + this.findStackViewRow(rowUid).height, 0);
   }
 
+  heightOfTable (uid: ItemUid): number {
+    const table = this.findItem(uid);
+    if (table.type !== 'table') throw new Error(`Table(${uid}) is not found`);
+
+    return table.rows.reduce((h, rowUid) => calcPlus(h, this.findTableRow(rowUid).height), 0);
+  }
+
+  widthOfTable (uid: ItemUid): number {
+    const table = this.findItem(uid);
+    if (table.type !== 'table') throw new Error(`Table(${uid}) is not found`);
+
+    return table.columns.reduce((w, column) => calcPlus(w, column.width), 0);
+  }
+
+  // x offset of each column, keyed by the column id.
+  columnOffsetsOfTable (uid: ItemUid): { [columnId: string]: number } {
+    const table = this.findItem(uid);
+    if (table.type !== 'table') throw new Error(`Table(${uid}) is not found`);
+
+    const offsets: { [columnId: string]: number } = {};
+    let offset = 0;
+
+    table.columns.forEach(column => {
+      offsets[column.id] = offset;
+      offset = calcPlus(offset, column.width);
+    });
+
+    return offsets;
+  }
+
   activeSection (): AnySection | null {
     if (this.state.activeEntity && this.state.activeEntity.type === 'section') {
       return this.findSection(this.state.activeEntity.uid);
@@ -193,6 +272,50 @@ export class Getters extends GettersBase<Report> {
     } else {
       return null;
     }
+  }
+
+  activeTableRow (): TableRow | null {
+    if (this.state.activeEntity && this.state.activeEntity.type === 'table-row') {
+      return this.findTableRow(this.state.activeEntity.uid);
+    } else {
+      return null;
+    }
+  }
+
+  activeTableCell (): TableCell | null {
+    if (this.state.activeEntity && this.state.activeEntity.type === 'table-cell') {
+      return this.findTableCell(this.state.activeEntity.uid);
+    } else {
+      return null;
+    }
+  }
+
+  tables (): TableItem[] {
+    return Object.values(this.state.entities.items).filter((item): item is TableItem => item!.type === 'table');
+  }
+
+  // The table which the active entity (the table itself, one of its rows or cells) belongs to.
+  activeTable (): TableItem | null {
+    const activeEntity = this.state.activeEntity;
+    if (activeEntity === null) return null;
+
+    switch (activeEntity.type) {
+      case 'item':
+        return this.tables().find(table => table.uid === activeEntity.uid) || null;
+      case 'table-row':
+        return this.tables().find(table => table.rows.includes(activeEntity.uid)) || null;
+      case 'table-cell':
+        return this.tables().find(table => {
+          return table.rows.some(rowUid => this.findTableRow(rowUid).cells.includes(activeEntity.uid));
+        }) || null;
+      default:
+        return null;
+    }
+  }
+
+  tableRowOfCell (cellUid: TableCellUid): TableRow | null {
+    return Object.values(this.state.entities.tableRows)
+      .find((row): row is TableRow => !!row && row.cells.includes(cellUid)) || null;
   }
 
   activeEntityExists (): boolean {
@@ -244,17 +367,50 @@ export class Getters extends GettersBase<Report> {
   copiedItem (uid: ItemUid): CopiedAnyItem {
     const fromItem = this.findItem(uid);
 
-    if (fromItem.type !== 'stack-view') {
-      return this.copiedGraphicItem(uid);
-    } else {
+    if (fromItem.type === 'stack-view') {
       return this.copiedStackViewItem(uid);
+    } else if (fromItem.type === 'table') {
+      return this.copiedTableItem(uid);
+    } else {
+      return this.copiedGraphicItem(uid);
     }
+  }
+
+  copiedTableItem (itemUid: ItemUid): CopiedTableItem {
+    const fromItem = this.findItem(itemUid);
+
+    if (fromItem.type !== 'table') throw new Error(`Table(${itemUid}) is not found`);
+
+    const { uid, ...itemWithoutUid } = _cloneDeep(fromItem);
+
+    return {
+      ...itemWithoutUid,
+      rows: itemWithoutUid.rows.map(rowUid => this.copiedTableRow(rowUid))
+    };
+  }
+
+  copiedTableRow (rowUid: TableRowUid): CopiedTableRow {
+    const { uid, ...rowWithoutUid } = _cloneDeep(this.findTableRow(rowUid));
+
+    return {
+      ...rowWithoutUid,
+      cells: rowWithoutUid.cells.map(cellUid => this.copiedTableCell(cellUid))
+    };
+  }
+
+  copiedTableCell (cellUid: TableCellUid): CopiedTableCell {
+    const { uid, content, ...cellWithoutUid } = _cloneDeep(this.findTableCell(cellUid));
+
+    return {
+      ...cellWithoutUid,
+      content: content ? this.copiedGraphicItem(content) : null
+    };
   }
 
   copiedGraphicItem (itemUid: ItemUid): CopiedGraphicItem {
     const fromItem = this.findItem(itemUid);
 
-    if (fromItem.type === 'stack-view') throw new Error(`GraphicItem(${itemUid}) is not found`);
+    if (fromItem.type === 'stack-view' || fromItem.type === 'table') throw new Error(`GraphicItem(${itemUid}) is not found`);
 
     const { uid, ...itemWithoutUid } = _cloneDeep(fromItem);
     return itemWithoutUid;

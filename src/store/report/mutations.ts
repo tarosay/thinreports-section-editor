@@ -5,7 +5,7 @@ import TextItemBuilder from './builders/text-item-builder';
 import { convertBPointsToEllipseItemBounds } from '@/lib/bounds-transformer';
 import { roundBoundingPoints, roundImageBlockItem, roundImageItem, roundLineItem, roundRectItem, roundStackViewItem, roundStackViewRow, roundTextBlockItem, roundTextItem } from '@/lib/round-float-values';
 import { deleteNormalizedValue, setNormalizedValue } from '@/store/lib/normalize-helper';
-import { ActiveEntity, AnyItem, AnySection, AnyUid, CanvasType, DetailSection, FooterSection, HeaderSection, ItemUid, RectItem, Report, SectionUid, StackViewItem, StackViewRow, StackViewRowUid, EllipseItem, LineItem, TextItem, ImageBlockItem, ImageItem, TextBlockItem, CanvasUid, EllipseItemBase, BoundingPoints, FontAndLineSize } from '@/types';
+import { ActiveEntity, AnyItem, AnySection, AnyUid, CanvasType, DetailSection, FooterSection, HeaderSection, ItemUid, RectItem, Report, SectionUid, StackViewItem, StackViewRow, StackViewRowUid, EllipseItem, LineItem, TextItem, ImageBlockItem, ImageItem, TextBlockItem, CanvasUid, EllipseItemBase, BoundingPoints, FontAndLineSize, TableItem, TableRow, TableRowUid, TableCell, TableCellUid, CellContentItem } from '@/types';
 
 class MutationError extends Error {
   constructor (message: string, state: Report) {
@@ -98,6 +98,7 @@ export class Mutations extends MutationsBase<Report> {
       case 'image-block': newItem = roundImageBlockItem(item); break;
       case 'image': newItem = roundImageItem(item); break;
       case 'stack-view': newItem = roundStackViewItem(item); break;
+      case 'table': newItem = item; break;
       default: throw new Error(`Invalid itemType: ${(item as AnyItem).type}`);
     }
 
@@ -255,6 +256,98 @@ export class Mutations extends MutationsBase<Report> {
     if (!row) throw this.entityNotFoundError('StackViewRow', uid);
 
     this.state.entities.stackViewRows[uid] = roundStackViewRow({ ...row, [key]: value });
+  }
+
+  // A cell content item is held by entities.items, but it does not belong to
+  // any section or stack-view-row: its position is computed from its own cell.
+  addCellContentItem ({ item }: { item: CellContentItem }) {
+    this.state.entities.items[item.uid] = item;
+  }
+
+  removeCellContentItem ({ uid }: { uid: ItemUid }) {
+    delete this.state.entities.items[uid];
+  }
+
+  addTableRow ({ uid, row, index }: { uid: ItemUid; row: TableRow; index?: number }) {
+    const table = this.state.entities.items[uid];
+    if (!table || table.type !== 'table') throw this.entityNotFoundError('Table', uid);
+
+    this.state.entities.tableRows[row.uid] = row;
+
+    if (index === undefined) {
+      table.rows.push(row.uid);
+    } else {
+      table.rows.splice(index, 0, row.uid);
+    }
+  }
+
+  removeTableRow ({ uid, rowUid }: { uid: ItemUid; rowUid: TableRowUid }) {
+    const table = this.state.entities.items[uid];
+    if (!table || table.type !== 'table') throw this.entityNotFoundError('Table', uid);
+
+    deleteNormalizedValue(this.state.entities.tableRows, table.rows, rowUid);
+  }
+
+  moveTableRow ({ uid, rowUid, direction }: { uid: ItemUid; rowUid: TableRowUid; direction: 'up' | 'down' }) {
+    const table = this.state.entities.items[uid];
+    if (!table || table.type !== 'table') throw this.entityNotFoundError('Table', uid);
+
+    const index = table.rows.indexOf(rowUid);
+
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === table.rows.length - 1) return;
+
+    table.rows.splice(index, 1);
+    table.rows.splice(index + (direction === 'up' ? -1 : 1), 0, rowUid);
+  }
+
+  addTableCell ({ rowUid, cell, index }: { rowUid: TableRowUid; cell: TableCell; index?: number }) {
+    const row = this.state.entities.tableRows[rowUid];
+    if (!row) throw this.entityNotFoundError('TableRow', rowUid);
+
+    this.state.entities.tableCells[cell.uid] = cell;
+
+    if (index === undefined) {
+      row.cells.push(cell.uid);
+    } else {
+      row.cells.splice(index, 0, cell.uid);
+    }
+  }
+
+  removeTableCell ({ rowUid, cellUid }: { rowUid: TableRowUid; cellUid: TableCellUid }) {
+    const row = this.state.entities.tableRows[rowUid];
+    if (!row) throw this.entityNotFoundError('TableRow', rowUid);
+
+    deleteNormalizedValue(this.state.entities.tableCells, row.cells, cellUid);
+  }
+
+  updateTableItem <K extends keyof TableItem> ({ uid, key, value }: { uid: ItemUid; key: K; value: TableItem[K] }) {
+    const item = this.state.entities.items[uid];
+    if (!item || item.type !== 'table') throw this.entityNotFoundError('Table', uid);
+
+    this.state.entities.items[uid] = { ...item, [key]: value };
+  }
+
+  updateTableRow <K extends keyof TableRow> ({ uid, key, value }: { uid: TableRowUid; key: K; value: TableRow[K] }) {
+    const row = this.state.entities.tableRows[uid];
+    if (!row) throw this.entityNotFoundError('TableRow', uid);
+
+    this.state.entities.tableRows[uid] = { ...row, [key]: value };
+  }
+
+  updateTableCell <K extends keyof TableCell> ({ uid, key, value }: { uid: TableCellUid; key: K; value: TableCell[K] }) {
+    const cell = this.state.entities.tableCells[uid];
+    if (!cell) throw this.entityNotFoundError('TableCell', uid);
+
+    this.state.entities.tableCells[uid] = { ...cell, [key]: value };
+  }
+
+  updateTableCellStyle <K extends keyof TableCell['style']> ({ uid, key, value }: { uid: TableCellUid; key: K; value: TableCell['style'][K] }) {
+    const cell = this.state.entities.tableCells[uid];
+    if (!cell) throw this.entityNotFoundError('TableCell', uid);
+
+    cell.style = { ...cell.style, [key]: value };
   }
 
   bringItemLayerTo ({ uid, destination }: { uid: ItemUid; destination: 'front' | 'forward' | 'back' | 'backward' }) {

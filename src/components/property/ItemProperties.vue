@@ -32,6 +32,10 @@
       v-if="isStackViewItem"
       :item="item"
     />
+    <TableItemProperties
+      v-if="isTableItem"
+      :item="item"
+    />
   </div>
 </template>
 
@@ -43,6 +47,7 @@ import ImageItemProperties from './ImageItemProperties.vue';
 import LineItemProperties from './LineItemProperties.vue';
 import RectItemProperties from './RectItemProperties.vue';
 import StackViewItemProperties from './StackViewItemProperties.vue';
+import TableItemProperties from './TableItemProperties.vue';
 import TextBlockItemProperties from './TextBlockItemProperties.vue';
 import TextItemProperties from './TextItemProperties.vue';
 import { AnyItem } from '@/types';
@@ -56,7 +61,8 @@ export default defineComponent({
     TextBlockItemProperties,
     ImageItemProperties,
     ImageBlockItemProperties,
-    StackViewItemProperties
+    StackViewItemProperties,
+    TableItemProperties
   },
   props: {
     item: {
@@ -91,6 +97,9 @@ export default defineComponent({
     const isStackViewItem = computed((): boolean => {
       return item.value.type === 'stack-view';
     });
+    const isTableItem = computed((): boolean => {
+      return item.value.type === 'table';
+    });
 
     return {
       isRectItem,
@@ -100,7 +109,8 @@ export default defineComponent({
       isTextBlockItem,
       isImageItem,
       isImageBlockItem,
-      isStackViewItem
+      isStackViewItem,
+      isTableItem
     };
   }
 });

@@ -77,6 +77,7 @@ export default defineComponent({
         case 'text': report.actions.moveTextItemTo(payload); break;
         case 'text-block': report.actions.moveTextBlockItemTo(payload); break;
         case 'stack-view': report.actions.moveStackViewItemTo(payload); break;
+        case 'table': report.actions.moveTableItemTo(payload); break;
         default:
           throw new Error('Not Implemented');
       }

@@ -26,6 +26,7 @@ export default defineComponent({
         case 'text-block': return 'mdi mdi-text-recognition';
         case 'image-block': return 'mdi mdi-image-size-select-large';
         case 'stack-view': return 'mdi mdi-table-column';
+        case 'table': return 'mdi mdi-table';
         default: throw new Error('Invalid item type');
       }
     });

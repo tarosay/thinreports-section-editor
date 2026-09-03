@@ -41,6 +41,7 @@ import ImageItem from './items/ImageItem.vue';
 import LineItem from './items/LineItem.vue';
 import RectItem from './items/RectItem.vue';
 import StackViewItem from './items/StackViewItem.vue';
+import TableItem from './items/TableItem.vue';
 import TextBlockItem from './items/TextBlockItem.vue';
 import TextItem from './items/TextItem.vue';
 import { AnySection, AnyItem, ItemType, Coords } from '@/types';
@@ -55,6 +56,7 @@ export default defineComponent({
     ImageBlockItem,
     ImageItem,
     StackViewItem,
+    TableItem,
     SectionCanvasHighlighter,
     CanvasDrawer
   },

@@ -4,12 +4,13 @@ import { v4 as uuid } from 'uuid';
 import { ActionsBase } from '../base/actions-base';
 import { SaveHistory } from '../lib/save-history-decorator';
 import { computeTextFontAndLineSize } from '../lib/text-font-and-line-size';
+import { buildCell, buildCellContent, buildColumn, buildRow, DEFAULT_COLUMN_WIDTH, DEFAULT_ROW_HEIGHT } from './builders/table-item-factory';
 import TextBlockItemBuilder from './builders/text-block-item-builder';
 import TextItemBuilder from './builders/text-item-builder';
 import { Getters } from './getters';
 import { Mutations } from './mutations';
 import { BoundsTransformer } from '@/lib/bounds-transformer';
-import { ActiveEntity, AnySection, BoundingPoints, CanvasType, CanvasUid, DetailSection, EllipseItem, EllipseItemBase, FooterSection, HeaderSection, ImageBlockItem, ImageItem, ItemUid, LineItem, RectItem, Report, SectionUid, StackViewItem, StackViewRow, StackViewRowUid, TextBlockItem, TextItem, CopiedAnyItem, CopiedStackViewItem, GraphicItem, CopiedGraphicItem, FontAndLineSize } from '@/types';
+import { ActiveEntity, AnySection, BoundingPoints, CanvasType, CanvasUid, DetailSection, EllipseItem, EllipseItemBase, FooterSection, HeaderSection, ImageBlockItem, ImageItem, ItemUid, LineItem, RectItem, Report, SectionUid, StackViewItem, StackViewRow, StackViewRowUid, TextBlockItem, TextItem, CopiedAnyItem, CopiedStackViewItem, GraphicItem, CopiedGraphicItem, FontAndLineSize, TableItem, TableRow, TableRowUid, TableCell, TableCellUid, TableRowType, CellContentItemType, CopiedTableItem, CellContentItem } from '@/types';
 
 export class Actions extends ActionsBase<Report, Getters, Mutations> {
   @SaveHistory()
@@ -376,10 +377,228 @@ export class Actions extends ActionsBase<Report, Getters, Mutations> {
   }
 
   @SaveHistory()
+  drawNewTableItem ({ targetType, targetUid, bounds }: { targetType: CanvasType; targetUid: CanvasUid; bounds: BoundingPoints }) {
+    if (targetType === 'stack-view-row') throw new Error('Table cannot be drawn in StackViewRow');
+
+    const boundingBox = new BoundsTransformer(bounds).toBBox();
+    const columnCount = Math.max(1, Math.round(boundingBox.width / DEFAULT_COLUMN_WIDTH));
+    const columnWidth = Math.max(20, Math.round(boundingBox.width / columnCount));
+    const columns = Array.from({ length: columnCount }, (_, i) => buildColumn(i + 1, columnWidth));
+
+    const item: TableItem = {
+      uid: uuid() as ItemUid,
+      type: 'table',
+      id: '',
+      x: boundingBox.x,
+      y: boundingBox.y,
+      description: '',
+      display: true,
+      affectBottomMargin: true,
+      followStretch: 'none',
+      columns,
+      rows: [],
+      style: {
+        borderWidth: 0.5,
+        borderColor: '#000000',
+        borderStyle: 'solid'
+      }
+    };
+
+    this.mutations.addItem({ targetType, targetUid, item });
+
+    const rowHeight = Math.max(DEFAULT_ROW_HEIGHT, Math.round(boundingBox.height / 2));
+    this.addTableRow({ tableUid: item.uid, type: 'header', height: rowHeight, activate: false });
+    this.addTableRow({ tableUid: item.uid, type: 'body', height: rowHeight, activate: false });
+
+    this.mutations.setActiveEntity({ type: 'item', uid: item.uid });
+  }
+
+  @SaveHistory()
+  addTableRow ({ tableUid, type, height, index, activate = true }: { tableUid: ItemUid; type: TableRowType; height?: number; index?: number; activate?: boolean }) {
+    const table = this.getters.findItem(tableUid, 'table');
+    const row = buildRow({ id: this.nextTableRowId(table, type), type, height });
+
+    this.mutations.addTableRow({ uid: tableUid, row, index });
+
+    table.columns.forEach(column => {
+      const content = type === 'header' ? buildCellContent('text') : buildCellContent('text-block', column.id);
+      this.mutations.addCellContentItem({ item: content });
+      this.mutations.addTableCell({
+        rowUid: row.uid,
+        cell: buildCell({ columnId: column.id, content: content.uid })
+      });
+    });
+
+    if (activate) this.mutations.setActiveEntity({ type: 'table-row', uid: row.uid });
+  }
+
+  @SaveHistory()
+  addRowToActiveTable ({ type }: { type: TableRowType }) {
+    const table = this.getters.activeTable();
+    if (!table) return;
+
+    this.addTableRow({ tableUid: table.uid, type });
+  }
+
+  @SaveHistory()
+  removeTableRow ({ tableUid, rowUid }: { tableUid: ItemUid; rowUid: TableRowUid }) {
+    const row = this.getters.findTableRow(rowUid);
+
+    [...row.cells].forEach(cellUid => this.removeTableCell({ rowUid, cellUid }));
+    this.mutations.removeTableRow({ uid: tableUid, rowUid });
+  }
+
+  @SaveHistory()
+  removeActiveTableRow () {
+    const table = this.getters.activeTable();
+    const row = this.getters.activeTableRow();
+    if (!table || !row) return;
+
+    this.removeTableRow({ tableUid: table.uid, rowUid: row.uid });
+    this.mutations.setActiveEntity({ type: 'item', uid: table.uid });
+  }
+
+  removeTableCell ({ rowUid, cellUid }: { rowUid: TableRowUid; cellUid: TableCellUid }) {
+    const cell = this.getters.findTableCell(cellUid);
+
+    if (cell.content) this.mutations.removeCellContentItem({ uid: cell.content });
+    this.mutations.removeTableCell({ rowUid, cellUid });
+  }
+
+  @SaveHistory()
+  moveActiveTableRow ({ direction }: { direction: 'up' | 'down' }) {
+    const table = this.getters.activeTable();
+    const row = this.getters.activeTableRow();
+    if (!table || !row) return;
+
+    this.mutations.moveTableRow({ uid: table.uid, rowUid: row.uid, direction });
+  }
+
+  @SaveHistory()
+  addColumnToActiveTable () {
+    const table = this.getters.activeTable();
+    if (!table) return;
+
+    const column = buildColumn(this.nextTableColumnNumber(table));
+
+    this.mutations.updateTableItem({ uid: table.uid, key: 'columns', value: [...table.columns, column] });
+
+    table.rows.forEach(rowUid => {
+      const row = this.getters.findTableRow(rowUid);
+      const content = row.type === 'header' ? buildCellContent('text') : buildCellContent('text-block', column.id);
+
+      this.mutations.addCellContentItem({ item: content });
+      this.mutations.addTableCell({ rowUid, cell: buildCell({ columnId: column.id, content: content.uid }) });
+    });
+  }
+
+  @SaveHistory()
+  removeColumnFromActiveTable ({ columnId }: { columnId: string }) {
+    const table = this.getters.activeTable();
+    if (!table || table.columns.length <= 1) return;
+
+    this.mutations.updateTableItem({
+      uid: table.uid,
+      key: 'columns',
+      value: table.columns.filter(column => column.id !== columnId)
+    });
+
+    table.rows.forEach(rowUid => {
+      const row = this.getters.findTableRow(rowUid);
+      [...row.cells]
+        .filter(cellUid => this.getters.findTableCell(cellUid).columnId === columnId)
+        .forEach(cellUid => this.removeTableCell({ rowUid, cellUid }));
+    });
+  }
+
+  @SaveHistory()
+  updateTableColumn ({ tableUid, columnId, key, value }: { tableUid: ItemUid; columnId: string; key: 'id' | 'width'; value: string | number }) {
+    const table = this.getters.findItem(tableUid, 'table');
+    const columns = table.columns.map(column => {
+      return column.id === columnId ? { ...column, [key]: value } : column;
+    });
+
+    this.mutations.updateTableItem({ uid: tableUid, key: 'columns', value: columns });
+
+    // Cells refer to their column by id, so they have to follow the rename.
+    if (key === 'id') {
+      table.rows.forEach(rowUid => {
+        this.getters.findTableRow(rowUid).cells.forEach(cellUid => {
+          if (this.getters.findTableCell(cellUid).columnId !== columnId) return;
+          this.mutations.updateTableCell({ uid: cellUid, key: 'columnId', value: value as string });
+        });
+      });
+    }
+  }
+
+  @SaveHistory()
+  updateTableItem<K extends keyof TableItem> ({ uid, key, value }: { uid: ItemUid; key: K; value: TableItem[K] }) {
+    this.mutations.updateTableItem({ uid, key, value });
+  }
+
+  @SaveHistory()
+  updateTableRow<K extends keyof TableRow> ({ uid, key, value }: { uid: TableRowUid; key: K; value: TableRow[K] }) {
+    this.mutations.updateTableRow({ uid, key, value });
+  }
+
+  @SaveHistory()
+  updateTableCell<K extends keyof TableCell> ({ uid, key, value }: { uid: TableCellUid; key: K; value: TableCell[K] }) {
+    this.mutations.updateTableCell({ uid, key, value });
+  }
+
+  @SaveHistory()
+  updateTableCellStyle<K extends keyof TableCell['style']> ({ uid, key, value }: { uid: TableCellUid; key: K; value: TableCell['style'][K] }) {
+    this.mutations.updateTableCellStyle({ uid, key, value });
+  }
+
+  @SaveHistory()
+  changeTableCellContent ({ uid, type }: { uid: TableCellUid; type: CellContentItemType | 'none' }) {
+    const cell = this.getters.findTableCell(uid);
+
+    if (cell.content) this.mutations.removeCellContentItem({ uid: cell.content });
+
+    if (type === 'none') {
+      this.mutations.updateTableCell({ uid, key: 'content', value: null });
+      return;
+    }
+
+    const content = buildCellContent(type, type === 'text-block' ? cell.columnId : '');
+    this.mutations.addCellContentItem({ item: content });
+    this.mutations.updateTableCell({ uid, key: 'content', value: content.uid });
+  }
+
+  @SaveHistory()
+  moveTableItemTo ({ uid, bounds }: { uid: ItemUid; bounds: BoundingPoints }) {
+    this.mutations.updateTableItem({ uid, key: 'x', value: bounds.x1 });
+    this.mutations.updateTableItem({ uid, key: 'y', value: bounds.y1 });
+  }
+
+  private nextTableRowId (table: TableItem, type: TableRowType): string {
+    const used = table.rows.map(rowUid => this.getters.findTableRow(rowUid).id);
+
+    let index = used.filter(id => id.startsWith(type)).length + 1;
+    while (used.includes(`${type}${index}`)) index += 1;
+
+    return `${type}${index}`;
+  }
+
+  private nextTableColumnNumber (table: TableItem): number {
+    const used = table.columns.map(column => column.id);
+
+    let index = table.columns.length + 1;
+    while (used.includes(`column${index}`)) index += 1;
+
+    return index;
+  }
+
+  @SaveHistory()
   pasteItem ({ targetType, targetUid, item }: { targetType: CanvasType; targetUid: CanvasUid; item: CopiedAnyItem }) {
     if (item.type === 'stack-view') {
       if (targetType !== 'section') return;
       this.pasteStackViewItem({ targetUid: targetUid as SectionUid, item });
+    } else if (item.type === 'table') {
+      if (targetType !== 'section') return;
+      this.pasteTableItem({ targetUid: targetUid as SectionUid, item });
     } else {
       this.pasteGraphicItem({ targetType, targetUid, item });
     }
@@ -394,6 +613,48 @@ export class Actions extends ActionsBase<Report, Getters, Mutations> {
 
     this.mutations.addItem({ targetType, targetUid, item: newItem });
     this.mutations.setActiveEntity({ type: 'item', uid: newItem.uid });
+  }
+
+  @SaveHistory()
+  pasteTableItem ({ targetUid, item }: { targetUid: SectionUid; item: CopiedTableItem }) {
+    const newTableItem: TableItem = {
+      ..._cloneDeep(item),
+      uid: uuid() as ItemUid,
+      rows: []
+    };
+
+    this.mutations.addItem({ targetType: 'section', targetUid, item: newTableItem });
+
+    item.rows.forEach(row => {
+      const newRow: TableRow = {
+        ..._cloneDeep(row),
+        uid: uuid() as TableRowUid,
+        cells: []
+      };
+
+      this.mutations.addTableRow({ uid: newTableItem.uid, row: newRow });
+
+      row.cells.forEach(cell => {
+        let contentUid: ItemUid | null = null;
+
+        if (cell.content) {
+          const content = { ..._cloneDeep(cell.content), uid: uuid() as ItemUid } as CellContentItem;
+          this.mutations.addCellContentItem({ item: content });
+          contentUid = content.uid;
+        }
+
+        this.mutations.addTableCell({
+          rowUid: newRow.uid,
+          cell: {
+            ..._cloneDeep(cell),
+            uid: uuid() as TableCellUid,
+            content: contentUid
+          }
+        });
+      });
+    });
+
+    this.mutations.setActiveEntity({ type: 'item', uid: newTableItem.uid });
   }
 
   @SaveHistory()
@@ -589,6 +850,9 @@ export class Actions extends ActionsBase<Report, Getters, Mutations> {
 
     if (item.type === 'stack-view') {
       [...item.rows].forEach(rowUid => this.removeStackViewRow({ targetUid: item.uid, rowUid }));
+    }
+    if (item.type === 'table') {
+      [...item.rows].forEach(rowUid => this.removeTableRow({ tableUid: item.uid, rowUid }));
     }
     this.mutations.removeItem({ targetUid: parent.uid, uid: item.uid });
   }

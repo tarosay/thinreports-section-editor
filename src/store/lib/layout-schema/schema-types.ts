@@ -43,7 +43,8 @@ export type FooterSectionSchema = SectionSchema & {
 };
 
 export type GraphicItemSchema = RectItemSchema | EllipseItemSchema | LineItemSchema | TextItemSchema | TextBlockItemSchema | ImageBlockItemSchema | ImageItemSchema;
-export type AnyItemSchema = GraphicItemSchema | StackViewItemSchema;
+export type AnyItemSchema = GraphicItemSchema | StackViewItemSchema | TableItemSchema;
+export type CellContentItemSchema = TextItemSchema | TextBlockItemSchema | ImageBlockItemSchema | ImageItemSchema;
 
 export type ItemSchema = {
   id: string;
@@ -185,4 +186,55 @@ export type StackViewRowSchema = {
   autoStretch: boolean;
   display: boolean;
   items: GraphicItemSchema[];
+};
+
+export type TableItemSchema = ItemSchema & {
+  type: 'table';
+  x: number;
+  y: number;
+  style: ItemBorderStyleSchema;
+  columns: TableColumnSchema[];
+  rows: TableRowSchema[];
+};
+
+export type TableColumnSchema = {
+  id: string;
+  width: number;
+};
+
+export type TableRowSchema = {
+  id: string;
+  type: 'header' | 'body' | 'footer';
+  height: number;
+  autoStretch: boolean;
+  display: boolean;
+  cells: TableCellSchema[];
+};
+
+export type TableCellBorderSchema = null | 'none' | Partial<{
+  width: number;
+  color: string;
+  style: 'solid' | 'dashed' | 'dotted';
+}>;
+
+export type TableCellStyleSchema = {
+  backgroundColor: string;
+  backgroundPattern: 'none' | 'horizontal' | 'vertical' | 'grid' | 'forward-diagonal' | 'backward-diagonal' | 'cross-diagonal';
+  backgroundPatternColor: string;
+  backgroundPatternSpacing: number;
+  backgroundPatternWidth: number;
+  padding: [number, number, number, number];
+  borderTop: TableCellBorderSchema;
+  borderRight: TableCellBorderSchema;
+  borderBottom: TableCellBorderSchema;
+  borderLeft: TableCellBorderSchema;
+};
+
+export type TableCellSchema = {
+  columnId: string;
+  colSpan: number;
+  rowSpan: number;
+  display: boolean;
+  style: TableCellStyleSchema;
+  content?: CellContentItemSchema;
 };

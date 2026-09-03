@@ -146,9 +146,15 @@
       "minItems": 0,
       "items": {
         "anyOf": [
-          { "$ref": "#/definitions/HeaderSectionSchema" },
-          { "$ref": "#/definitions/DetailSectionSchema" },
-          { "$ref": "#/definitions/FooterSectionSchema" }
+          {
+            "$ref": "#/definitions/HeaderSectionSchema"
+          },
+          {
+            "$ref": "#/definitions/DetailSectionSchema"
+          },
+          {
+            "$ref": "#/definitions/FooterSectionSchema"
+          }
         ]
       }
     },
@@ -173,14 +179,33 @@
           "minItems": 0,
           "items": {
             "anyOf": [
-              { "$ref": "#/definitions/RectItemSchema" },
-              { "$ref": "#/definitions/EllipseItemSchema" },
-              { "$ref": "#/definitions/LineItemSchema" },
-              { "$ref": "#/definitions/TextItemSchema" },
-              { "$ref": "#/definitions/TextBlockItemSchema" },
-              { "$ref": "#/definitions/ImageBlockItemSchema" },
-              { "$ref": "#/definitions/ImageItemSchema" },
-              { "$ref": "#/definitions/StackViewItemSchema" }
+              {
+                "$ref": "#/definitions/RectItemSchema"
+              },
+              {
+                "$ref": "#/definitions/EllipseItemSchema"
+              },
+              {
+                "$ref": "#/definitions/LineItemSchema"
+              },
+              {
+                "$ref": "#/definitions/TextItemSchema"
+              },
+              {
+                "$ref": "#/definitions/TextBlockItemSchema"
+              },
+              {
+                "$ref": "#/definitions/ImageBlockItemSchema"
+              },
+              {
+                "$ref": "#/definitions/ImageItemSchema"
+              },
+              {
+                "$ref": "#/definitions/StackViewItemSchema"
+              },
+              {
+                "$ref": "#/definitions/TableItemSchema"
+              }
             ]
           }
         }
@@ -194,7 +219,9 @@
     },
     "HeaderSectionSchema": {
       "allOf": [
-        { "$ref": "#/definitions/SectionSchema" },
+        {
+          "$ref": "#/definitions/SectionSchema"
+        },
         {
           "type": "object",
           "title": "header section",
@@ -202,7 +229,9 @@
             "type": {
               "type": "string",
               "title": "type",
-              "enum": ["header"]
+              "enum": [
+                "header"
+              ]
             },
             "every-page": {
               "type": "boolean",
@@ -223,7 +252,9 @@
     },
     "DetailSectionSchema": {
       "allOf": [
-        { "$ref": "#/definitions/SectionSchema" },
+        {
+          "$ref": "#/definitions/SectionSchema"
+        },
         {
           "type": "object",
           "title": "detail section",
@@ -242,7 +273,9 @@
     },
     "FooterSectionSchema": {
       "allOf": [
-        { "$ref": "#/definitions/SectionSchema" },
+        {
+          "$ref": "#/definitions/SectionSchema"
+        },
         {
           "type": "object",
           "title": "footer section",
@@ -478,8 +511,12 @@
     },
     "RectItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
-        { "$ref": "#/definitions/ItemBoxBoundsSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
+        {
+          "$ref": "#/definitions/ItemBoxBoundsSchema"
+        },
         {
           "type": "object",
           "title": "rect item",
@@ -496,7 +533,9 @@
             "style": {
               "title": "style",
               "allOf": [
-                { "$ref": "#/definitions/ItemBorderStyleSchema" },
+                {
+                  "$ref": "#/definitions/ItemBorderStyleSchema"
+                },
                 {
                   "type": "object",
                   "properties": {
@@ -522,7 +561,9 @@
     },
     "EllipseItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
         {
           "type": "object",
           "properties": {
@@ -558,7 +599,9 @@
             "style": {
               "title": "style",
               "allOf": [
-                { "$ref": "#/definitions/ItemBorderStyleSchema" },
+                {
+                  "$ref": "#/definitions/ItemBorderStyleSchema"
+                },
                 {
                   "type": "object",
                   "properties": {
@@ -587,7 +630,9 @@
     },
     "LineItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
         {
           "type": "object",
           "properties": {
@@ -623,7 +668,6 @@
             "style": {
               "$ref": "#/definitions/ItemBorderStyleSchema"
             }
-
           },
           "required": [
             "style",
@@ -638,8 +682,12 @@
     },
     "TextItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
-        { "$ref": "#/definitions/ItemBoxBoundsSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
+        {
+          "$ref": "#/definitions/ItemBoxBoundsSchema"
+        },
         {
           "type": "object",
           "properties": {
@@ -669,8 +717,12 @@
     },
     "TextBlockItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
-        { "$ref": "#/definitions/ItemBoxBoundsSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
+        {
+          "$ref": "#/definitions/ItemBoxBoundsSchema"
+        },
         {
           "type": "object",
           "properties": {
@@ -708,10 +760,18 @@
                 },
                 {
                   "anyOf": [
-                    { "$ref": "#/definitions/ItemTextBlockFormatNoneSchema" },
-                    { "$ref": "#/definitions/ItemTextBlockFormatDatetimeSchema" },
-                    { "$ref": "#/definitions/ItemTextBlockFormatNumberSchema" },
-                    { "$ref": "#/definitions/ItemTextBlockFormatPaddingSchema" }
+                    {
+                      "$ref": "#/definitions/ItemTextBlockFormatNoneSchema"
+                    },
+                    {
+                      "$ref": "#/definitions/ItemTextBlockFormatDatetimeSchema"
+                    },
+                    {
+                      "$ref": "#/definitions/ItemTextBlockFormatNumberSchema"
+                    },
+                    {
+                      "$ref": "#/definitions/ItemTextBlockFormatPaddingSchema"
+                    }
                   ]
                 }
               ]
@@ -719,7 +779,9 @@
             "style": {
               "title": "style",
               "allOf": [
-                { "$ref": "#/definitions/ItemTextStyleSchema" },
+                {
+                  "$ref": "#/definitions/ItemTextStyleSchema"
+                },
                 {
                   "type": "object",
                   "properties": {
@@ -875,8 +937,12 @@
     },
     "ImageBlockItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
-        { "$ref": "#/definitions/ItemBoxBoundsSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
+        {
+          "$ref": "#/definitions/ItemBoxBoundsSchema"
+        },
         {
           "type": "object",
           "title": "image-block",
@@ -924,8 +990,12 @@
     },
     "ImageItemSchema": {
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
-        { "$ref": "#/definitions/ItemBoxBoundsSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
+        {
+          "$ref": "#/definitions/ItemBoxBoundsSchema"
+        },
         {
           "type": "object",
           "title": "image",
@@ -970,7 +1040,9 @@
     "StackViewItemSchema": {
       "title": "stack-view item",
       "allOf": [
-        { "$ref": "#/definitions/ItemSchema" },
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
         {
           "type": "object",
           "properties": {
@@ -1050,13 +1122,27 @@
           "title": "items",
           "items": {
             "anyOf": [
-              { "$ref": "#/definitions/RectItemSchema" },
-              { "$ref": "#/definitions/EllipseItemSchema" },
-              { "$ref": "#/definitions/LineItemSchema" },
-              { "$ref": "#/definitions/TextItemSchema" },
-              { "$ref": "#/definitions/TextBlockItemSchema" },
-              { "$ref": "#/definitions/ImageBlockItemSchema" },
-              { "$ref": "#/definitions/ImageItemSchema" }
+              {
+                "$ref": "#/definitions/RectItemSchema"
+              },
+              {
+                "$ref": "#/definitions/EllipseItemSchema"
+              },
+              {
+                "$ref": "#/definitions/LineItemSchema"
+              },
+              {
+                "$ref": "#/definitions/TextItemSchema"
+              },
+              {
+                "$ref": "#/definitions/TextBlockItemSchema"
+              },
+              {
+                "$ref": "#/definitions/ImageBlockItemSchema"
+              },
+              {
+                "$ref": "#/definitions/ImageItemSchema"
+              }
             ]
           }
         }
@@ -1067,6 +1153,360 @@
         "height",
         "id",
         "items"
+      ]
+    },
+    "TableItemColumnSchema": {
+      "type": "object",
+      "title": "table column",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id"
+        },
+        "width": {
+          "type": "number",
+          "title": "width"
+        }
+      },
+      "required": [
+        "id",
+        "width"
+      ]
+    },
+    "TableItemCellStyleSchema": {
+      "type": "object",
+      "title": "table cell style",
+      "properties": {
+        "background-color": {
+          "type": "string",
+          "title": "background-color"
+        },
+        "background-pattern": {
+          "type": "string",
+          "title": "background-pattern",
+          "enum": [
+            "none",
+            "horizontal",
+            "vertical",
+            "grid",
+            "forward-diagonal",
+            "backward-diagonal",
+            "cross-diagonal"
+          ]
+        },
+        "background-pattern-color": {
+          "type": "string",
+          "title": "background-pattern-color"
+        },
+        "background-pattern-spacing": {
+          "type": "number",
+          "title": "background-pattern-spacing"
+        },
+        "background-pattern-width": {
+          "type": "number",
+          "title": "background-pattern-width"
+        },
+        "padding": {
+          "type": "array",
+          "title": "padding",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "border-top": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "const": "none"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "style": {
+                  "type": "string",
+                  "enum": [
+                    "dashed",
+                    "dotted",
+                    "solid"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "title": "border-top"
+        },
+        "border-right": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "const": "none"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "style": {
+                  "type": "string",
+                  "enum": [
+                    "dashed",
+                    "dotted",
+                    "solid"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "title": "border-right"
+        },
+        "border-bottom": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "const": "none"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "style": {
+                  "type": "string",
+                  "enum": [
+                    "dashed",
+                    "dotted",
+                    "solid"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "title": "border-bottom"
+        },
+        "border-left": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "const": "none"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "style": {
+                  "type": "string",
+                  "enum": [
+                    "dashed",
+                    "dotted",
+                    "solid"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "title": "border-left"
+        }
+      },
+      "required": [
+        "background-color",
+        "background-pattern",
+        "background-pattern-color",
+        "background-pattern-spacing",
+        "background-pattern-width",
+        "padding",
+        "border-top",
+        "border-right",
+        "border-bottom",
+        "border-left"
+      ]
+    },
+    "TableItemCellSchema": {
+      "type": "object",
+      "title": "table cell",
+      "properties": {
+        "column-id": {
+          "type": "string",
+          "title": "column-id"
+        },
+        "col-span": {
+          "type": "number",
+          "title": "col-span"
+        },
+        "row-span": {
+          "type": "number",
+          "title": "row-span"
+        },
+        "display": {
+          "type": "boolean",
+          "title": "display"
+        },
+        "style": {
+          "$ref": "#/definitions/TableItemCellStyleSchema"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TextItemSchema"
+            },
+            {
+              "$ref": "#/definitions/TextBlockItemSchema"
+            },
+            {
+              "$ref": "#/definitions/ImageBlockItemSchema"
+            },
+            {
+              "$ref": "#/definitions/ImageItemSchema"
+            }
+          ]
+        }
+      },
+      "required": [
+        "column-id",
+        "col-span",
+        "row-span",
+        "display",
+        "style"
+      ]
+    },
+    "TableItemRowSchema": {
+      "type": "object",
+      "title": "table row",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id"
+        },
+        "type": {
+          "type": "string",
+          "title": "type",
+          "enum": [
+            "header",
+            "body",
+            "footer"
+          ]
+        },
+        "height": {
+          "type": "number",
+          "title": "height"
+        },
+        "auto-stretch": {
+          "type": "boolean",
+          "title": "auto-stretch"
+        },
+        "display": {
+          "type": "boolean",
+          "title": "display"
+        },
+        "cells": {
+          "type": "array",
+          "title": "cells",
+          "items": {
+            "$ref": "#/definitions/TableItemCellSchema"
+          }
+        }
+      },
+      "required": [
+        "auto-stretch",
+        "cells",
+        "display",
+        "height",
+        "id",
+        "type"
+      ]
+    },
+    "TableItemSchema": {
+      "title": "table item",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ItemSchema"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "title": "x"
+            },
+            "y": {
+              "type": "number",
+              "title": "y"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "type",
+              "const": "table"
+            },
+            "style": {
+              "$ref": "#/definitions/ItemBorderStyleSchema"
+            },
+            "columns": {
+              "type": "array",
+              "title": "columns",
+              "items": {
+                "$ref": "#/definitions/TableItemColumnSchema"
+              }
+            },
+            "rows": {
+              "type": "array",
+              "title": "rows",
+              "items": {
+                "$ref": "#/definitions/TableItemRowSchema"
+              }
+            }
+          },
+          "required": [
+            "columns",
+            "rows",
+            "style",
+            "type"
+          ]
+        }
       ]
     }
   }

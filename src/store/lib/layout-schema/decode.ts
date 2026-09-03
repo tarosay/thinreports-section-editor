@@ -1,8 +1,8 @@
 import { v4 as uuid } from 'uuid';
-import { AnyItemSchema, AnySectionSchema, GraphicItemSchema, LayoutSchema, StackViewItemSchema, StackViewRowSchema, TextItemSchema } from './schema-types';
+import { AnyItemSchema, AnySectionSchema, CellContentItemSchema, GraphicItemSchema, LayoutSchema, StackViewItemSchema, StackViewRowSchema, TableCellSchema, TableItemSchema, TableRowSchema, TextItemSchema } from './schema-types';
 import { deepChangeToCamelCase } from '@/lib/deep-change-case';
 import { computeContentHeight } from '@/store/report/builders/text-item-builder';
-import { Report, SectionUid, AnySection, AnyItem, ItemUid, StackViewItem, StackViewRowUid, GraphicItem, TextItem } from '@/types';
+import { Report, SectionUid, AnySection, AnyItem, ItemUid, StackViewItem, StackViewRowUid, GraphicItem, TextItem, TableItem, TableRowUid, TableCellUid } from '@/types';
 
 class SchemaDecoder {
   private layoutSchema: LayoutSchema;
@@ -10,6 +10,8 @@ class SchemaDecoder {
   private itemEntities: Report['entities']['items'];
   private sectionEntities: Report['entities']['sections'];
   private stackViewRowEntities: Report['entities']['stackViewRows'];
+  private tableRowEntities: Report['entities']['tableRows'];
+  private tableCellEntities: Report['entities']['tableCells'];
 
   constructor (layoutSchema: LayoutSchema) {
     this.layoutSchema = layoutSchema;
@@ -17,6 +19,8 @@ class SchemaDecoder {
     this.itemEntities = {};
     this.sectionEntities = {};
     this.stackViewRowEntities = {};
+    this.tableRowEntities = {};
+    this.tableCellEntities = {};
   }
 
   decode (): Omit<Report, 'activeEntity'> {
@@ -34,7 +38,9 @@ class SchemaDecoder {
       entities: {
         items: this.itemEntities,
         sections: this.sectionEntities,
-        stackViewRows: this.stackViewRowEntities
+        stackViewRows: this.stackViewRowEntities,
+        tableRows: this.tableRowEntities,
+        tableCells: this.tableCellEntities
       },
       layoutGuides: this.layoutSchema.state.layoutGuides
     };
@@ -81,9 +87,18 @@ class SchemaDecoder {
     const itemUids: ItemUid[] = [];
 
     itemSchemas.forEach(itemSchema => {
-      const item: AnyItem = itemSchema.type === 'stack-view'
-        ? this.stackViewItem(itemSchema)
-        : this.item(itemSchema);
+      let item: AnyItem;
+
+      switch (itemSchema.type) {
+        case 'stack-view':
+          item = this.stackViewItem(itemSchema);
+          break;
+        case 'table':
+          item = this.tableItem(itemSchema);
+          break;
+        default:
+          item = this.item(itemSchema);
+      }
 
       itemUids.push(item.uid);
       this.itemEntities[item.uid] = item;
@@ -113,6 +128,47 @@ class SchemaDecoder {
         lineHeight: schema.style.lineHeight
       })
     };
+  }
+
+  tableItem (itemSchema: TableItemSchema): TableItem {
+    return {
+      uid: uuid() as ItemUid,
+      ...itemSchema,
+      rows: this.tableRows(itemSchema.rows)
+    };
+  }
+
+  tableRows (rowSchemas: TableRowSchema[]): TableRowUid[] {
+    return rowSchemas.map(rowSchema => {
+      const row = {
+        uid: uuid() as TableRowUid,
+        ...rowSchema,
+        cells: this.tableCells(rowSchema.cells)
+      };
+
+      this.tableRowEntities[row.uid] = row;
+      return row.uid;
+    });
+  }
+
+  tableCells (cellSchemas: TableCellSchema[]): TableCellUid[] {
+    return cellSchemas.map(cellSchema => {
+      const { content, ...attributes } = cellSchema;
+      const cell = {
+        uid: uuid() as TableCellUid,
+        ...attributes,
+        content: content ? this.cellContent(content) : null
+      };
+
+      this.tableCellEntities[cell.uid] = cell;
+      return cell.uid;
+    });
+  }
+
+  cellContent (contentSchema: CellContentItemSchema): ItemUid {
+    const item = this.item(contentSchema);
+    this.itemEntities[item.uid] = item;
+    return item.uid;
   }
 
   stackViewItem (itemSchema: StackViewItemSchema): StackViewItem {

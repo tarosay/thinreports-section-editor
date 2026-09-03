@@ -33,7 +33,9 @@ export class Store extends StoreBase<Report> {
       entities: {
         sections: {} as Report['entities']['sections'],
         items: {} as Report['entities']['items'],
-        stackViewRows: {} as Report['entities']['stackViewRows']
+        stackViewRows: {} as Report['entities']['stackViewRows'],
+        tableRows: {} as Report['entities']['tableRows'],
+        tableCells: {} as Report['entities']['tableCells']
       },
       activeEntity: null,
       layoutGuides: []

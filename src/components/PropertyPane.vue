@@ -12,6 +12,14 @@
         v-if="activeStackViewRow"
         :row="activeStackViewRow"
       />
+      <TableRowProperties
+        v-if="activeTableRow"
+        :row="activeTableRow"
+      />
+      <TableCellProperties
+        v-if="activeTableCell"
+        :cell="activeTableCell"
+      />
       <SectionProperties
         v-if="activeSection"
         :section="activeSection"
@@ -26,12 +34,16 @@ import { report } from '../store';
 import ItemProperties from './property/ItemProperties.vue';
 import SectionProperties from './property/SectionProperties.vue';
 import StackViewRowProperties from './property/StackViewRowProperties.vue';
+import TableCellProperties from './property/TableCellProperties.vue';
+import TableRowProperties from './property/TableRowProperties.vue';
 
 export default defineComponent({
   components: {
     ItemProperties,
     SectionProperties,
-    StackViewRowProperties
+    StackViewRowProperties,
+    TableRowProperties,
+    TableCellProperties
   },
   props: {
     width: {
@@ -43,11 +55,15 @@ export default defineComponent({
     const activeItem = computed(() => report.getters.activeItem());
     const activeStackViewRow = computed(() => report.getters.activeStackViewRow());
     const activeSection = computed(() => report.getters.activeSection());
+    const activeTableRow = computed(() => report.getters.activeTableRow());
+    const activeTableCell = computed(() => report.getters.activeTableCell());
 
     return {
       activeItem,
       activeStackViewRow,
-      activeSection
+      activeSection,
+      activeTableRow,
+      activeTableCell
     };
   }
 });
