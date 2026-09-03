@@ -95,6 +95,12 @@ src/
 
 実例として `table` の実装がある。[docs/table-item.md](docs/table-item.md) を読むこと。
 
+## 初めてこのリポジトリに触る人へ
+
+git や GitHub に不慣れな利用者向けの導入手順が、Generator 側のリポジトリの
+`docs/getting-started-ja.md` にある。環境構築から表の使い方、改造の始め方までを
+**Claude Code に貼り付ける文章**の形で書いてある。利用者が詰まっていたら、まずこれを案内すること。
+
 ## テストの書き方
 
 `tests/unit/store/table-item.spec.ts` が参考になる。ストアは import するだけで使えるが、
