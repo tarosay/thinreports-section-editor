@@ -4,7 +4,10 @@ module.exports = defineConfig({
   pluginOptions: {
     electronBuilder: {
       builderOptions: {
-        appId: 'com.thinreports.section-editor',
+        // This build is a preview of the table item, and is meant to be
+        // installed side by side with the official Section Editor.
+        appId: 'com.thinreports.section-editor.table-preview',
+        productName: 'Thinreports Editor table preview',
         publish: null,
         mac: {
           artifactName: '${productName}-${version}-darwin.${ext}',
@@ -18,7 +21,7 @@ module.exports = defineConfig({
           target: 'AppImage'
         },
         win: {
-          artifactName: '${productName}-${version}-win32.${ext}',
+          artifactName: 'thinreports-section-editor-table-preview-${version}-win32.${ext}',
           icon: 'build/icon.ico'
         }
       },
